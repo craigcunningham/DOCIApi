@@ -143,7 +143,7 @@ $router->get('Rosters/BySeason/{seasonid}', function($seasonid) {
     $rosters = DB::select("SELECT docilineup.id, docilineup.team_id, docilineup.player_id,
                     docilineup.position, docilineup.season_id, docilineup.date_added,
                     dociteam.name AS team_name, 
-                    CONCAT(daflplayer.firstName, ' ', daflplayer.lastName) AS player_name
+                    daflplayer.fullName AS player_name
                     FROM docilineup 
                     JOIN dociteam ON docilineup.team_id = dociteam.id
                     JOIN daflplayer ON docilineup.player_id = daflplayer.DAFLID
@@ -166,7 +166,7 @@ $router->post('Rosters', function(\Illuminate\Http\Request $request) {
     $rosters = DB::select("SELECT docilineup.id, docilineup.team_id, docilineup.player_id,
                     docilineup.position, docilineup.season_id, docilineup.date_added,
                     dociteam.name AS team_name, 
-                    CONCAT(daflplayer.firstName, ' ', daflplayer.lastName) AS player_name
+                    daflplayer.fullName AS player_name
                     FROM docilineup 
                     JOIN dociteam ON docilineup.team_id = dociteam.id
                     JOIN daflplayer ON docilineup.player_id = daflplayer.DAFLID
@@ -187,10 +187,19 @@ $router->delete('Rosters/{id}', function($id) {
 // Player routes
 $router->get('Players/SearchByName/{searchTerm}', function($searchTerm) {
     $playerName = urldecode($searchTerm);
+    $fullName = '%' . $playerName . '%';
+
+    $players = DB::select("SELECT DAFLID as id, 
+    daflplayer.fullName AS name,
+    CASE daflplayer.pitcher_ind WHEN 1 THEN 'P' WHEN 0 THEN 'H' ELSE 'H' END AS position,
+    daflplayer.teamCode AS mlbteam
+    FROM  daflplayer
+    WHERE fullName like :fullName", ['fullName' => $fullName]);
+    return $players;
+/*
     $lastName = '%';
     $firstName = '%';
-
-    if(strrchr($playerName, ','))
+        if(strrchr($playerName, ','))
     {
         $names = explode(",", $playerName);
         $lastName = trim($names[0]) . "%";
@@ -229,4 +238,5 @@ $router->get('Players/SearchByName/{searchTerm}', function($searchTerm) {
                     WHERE firstName like :firstName and lastName like :lastName", ['lastName' => $lastName, 'firstName' => $firstName]);
     }
     return $players;
+*/
 });
