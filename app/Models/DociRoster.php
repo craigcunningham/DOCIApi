@@ -11,7 +11,7 @@ class DociRoster extends Model
      *
      * @type array
      */
-    //protected $fillable = [$2];
+    protected $guarded = [];
     protected $table = "docilineup";
     public $timestamps = false;
 }

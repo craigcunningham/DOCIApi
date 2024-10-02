@@ -136,7 +136,7 @@ $router->get('Rosters', function() {
 
 $router->get('Rosters/{id}', function($id) {
     $roster = App\Models\DociRoster::find($id);
-    return $season;
+    return $roster;
 });
 
 $router->get('Rosters/BySeason/{seasonid}', function($seasonid) {
@@ -157,12 +157,14 @@ $router->get('Rosters/ByTeamAndSeason/{teamid}/{seasonid}', function($teamid, $s
 });
 
 $router->post('Rosters', function(\Illuminate\Http\Request $request) {
-    $roster = App\Models\DociRoster::create();
-    $roster->player_id = $request->json()->get('player_id');
-    $roster->team_id = $request->json()->get('team_id');
-    $roster->season_id = $request->json()->get('season_id');
-    $roster->position = $request->json()->get('position');
-    $roster->save();
+    DB::table('docilineup')->insert(
+        ['player_id' => $request->player_id, 
+        'team_id' => $request->team_id, 
+        'season_id' => $request->season_id, 
+        'position' => $request->position]
+    );
+    error_log('After Save: ' . $request->player_id);
+
     $rosters = DB::select("SELECT docilineup.id, docilineup.team_id, docilineup.player_id,
                     docilineup.position, docilineup.season_id, docilineup.date_added,
                     dociteam.name AS team_name, 
@@ -170,7 +172,14 @@ $router->post('Rosters', function(\Illuminate\Http\Request $request) {
                     FROM docilineup 
                     JOIN dociteam ON docilineup.team_id = dociteam.id
                     JOIN daflplayer ON docilineup.player_id = daflplayer.DAFLID
-                    WHERE docilineup.id = :rosterid", ['rosterid' => $roster->id]);
+                    WHERE docilineup.team_id = :teamid 
+                    AND docilineup.player_id = :playerid 
+                    AND docilineup.season_id = :seasonid", 
+                    [
+                        'teamid' => $request->team_id,
+                        'playerid' => $request->player_id,
+                        'seasonid' => $request->season_id
+                ]);
     return($rosters);
 });
 
